@@ -1,0 +1,2088 @@
+{
+	"info": {
+		"_postman_id": "eeb22471-777e-484e-af37-59574c89ccad",
+		"name": "Config",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "18620672",
+		"_collection_link": "https://red-desert-960355.postman.co/workspace/Team-Workspace~f79c2d44-56be-4fd9-8894-a5fa1dfed054/collection/18620672-eeb22471-777e-484e-af37-59574c89ccad?action=share&source=collection_link&creator=18620672"
+	},
+	"item": [
+		{
+			"name": "Mako",
+			"item": [
+				{
+					"name": "ios",
+					"item": [
+						{
+							"name": "mainConfig",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"// ✅ Test 1: Validate pushTag does not contain debug",
+											"pm.test(\"Test 1: pushTag does not contain 'debug'\", function () {",
+											"    const pushTag = json.params?.pushTag;",
+											"    pm.expect(pushTag, \"pushTag is missing or not a string\").to.be.a(\"string\");",
+											"    console.log(\"pushTag:\", pushTag);",
+											"    pm.expect(pushTag.toLowerCase(), `'pushTag' contains 'debug': ${pushTag}`).to.not.include(\"debug\");",
+											"});",
+											"",
+											"// ✅ Test 2: Validate defaultIU is '/242748299/mako_mobile'",
+											"pm.test(\"Test 2: defaultIU is '/242748299/mako_mobile'\", function () {",
+											"    pm.expect(json.params?.defaultIU, \"defaultIU is missing or not a string\").to.be.a(\"string\");",
+											"    const defaultIU = json.params?.defaultIU;",
+											"    const expected = \"/242748299/mako_mobile\";",
+											"    console.log(\"defaultIU:\", defaultIU);",
+											"    pm.expect(defaultIU, `Expected defaultIU to be '${expected}' but got '${defaultIU}'`).to.eql(expected);",
+											"});",
+											"",
+											"// ✅ Test 3: Validate all source URLs do not contain 'test' 'int' and 'dev'",
+											"pm.test(\"Test 3: sources URLs do not contain 'test', 'int', or 'dev'\", function () {",
+											"    const sources = json.sources || {};",
+											"    const forbidden = [\"test\", \"int\", \"renderint\"];",
+											"    const urls = Object.values(sources);",
+											"",
+											"    console.log(\"All source URLs:\", urls);",
+											"    pm.expect(urls.length, \"No URLs found in sources\").to.be.above(0);",
+											"",
+											"    const offendingUrls = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().includes(part))",
+											"    );",
+											"",
+											"    const offendingUrlsDev = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().replaceAll('device',' ').includes('dev'))",
+											"    );",
+											"",
+											"    const allOffendingUrls = [...offendingUrls, ...offendingUrlsDev];",
+											"    console.log(\"Offending URLs (forbidden content):\", allOffendingUrls);",
+											"",
+											"    pm.expect(allOffendingUrls.length, `Found forbidden URLs: ${allOffendingUrls.join(', ')}`).to.equal(0);",
+											"});",
+											"",
+											"// ✅ Test 4: Check player config URL exist",
+											"pm.test(\"Test 4: Player config URL exists and is a valid URL\", function () {",
+											"    const playerUrl = json.sources?.player;",
+											"    console.log(\"player config URL:\", playerUrl);",
+											"    pm.expect(playerUrl, \"Player config URL is missing or not defined\").to.exist;",
+											"    pm.expect(playerUrl, `Player config URL is invalid: ${playerUrl}`).to.match(/^https:\\/\\/.+\\.json$/);",
+											"});",
+											"",
+											"let playerUrl = json.sources.player;",
+											"pm.collectionVariables.set(\"mako_ios_player_url\", playerUrl);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://apps.mako.co.il/mobile/config/mako/ios/22.0/mainConfig.json",
+									"protocol": "https",
+									"host": [
+										"apps",
+										"mako",
+										"co",
+										"il"
+									],
+									"path": [
+										"mobile",
+										"config",
+										"mako",
+										"ios",
+										"22.0",
+										"mainConfig.json"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "playerConfig - RUN mainConfig to update url",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const config = pm.response.json();",
+											"",
+											"// ✅ Test 1: dfp_ad_tag contains 'slotname=%IU%'",
+											"pm.test(\"Test 1: dfp_ad_tag contains 'slotname=%IU%'\", function () {",
+											"    const adTag = config.params?.advertising?.dfp_ad_tag || \"\";",
+											"    console.log(\"dfp_ad_tag:\", adTag);",
+											"    pm.expect(adTag, `Expected dfp_ad_tag to be a string, got: ${typeof adTag}`).to.be.a(\"string\");",
+											"    pm.expect(adTag.includes(\"slotname=%IU%\"), `dfp_ad_tag does not include 'slotname=%IU%': ${adTag}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 2: terminalLog value is false",
+											"pm.test(\"Test 2: terminalLog value is false\", function () {",
+											"    const terminalLog = config.params?.terminalLog;",
+											"    console.log(\"terminalLog:\", terminalLog);",
+											"    pm.expect(typeof terminalLog, `Expected terminalLog to be boolean, got: ${typeof terminalLog}`).to.equal(\"boolean\");",
+											"    pm.expect(terminalLog, `Expected terminalLog to be false, but got: ${terminalLog}`).to.eql(false);",
+											"});",
+											"",
+											"// ✅ Test 3: All stopWatchingTime values are greater than 1000",
+											"pm.test(\"Test 3: stopWatchingTime values are all greater than 1000\", function () {",
+											"    const stopTimes = config.params?.stopWatchingTime || {};",
+											"    console.log(\"stopWatchingTime values:\", stopTimes);",
+											"",
+											"    pm.expect(stopTimes, \"stopWatchingTime is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"",
+											"    const failingKeys = Object.entries(stopTimes)",
+											"        .filter(([key, val]) => val <= 1000)",
+											"        .map(([key, val]) => `${key}: ${val}`);",
+											"",
+											"    pm.expect(failingKeys.length === 0, `Some stopWatchingTime values are not above 1000: ${failingKeys.join(\", \")}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 4:  Check vod ad_rules values. preroll and midroll are true",
+											"pm.test(\"Test 4: Check ad_rules.vod values. preroll and midroll are true\", function () {",
+											"    const vod = config.ad_rules?.vod;",
+											"    console.log(\"ad_rules.vod:\", vod);",
+											"",
+											"    pm.expect(vod, \"vod config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(vod.preroll, `Expected vod.preroll to be true, but got: ${vod?.preroll}`).to.be.true;",
+											"    pm.expect(vod.midroll, `Expected vod.midroll to be true, but got: ${vod?.midroll}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 5: check ad_rule.live values. preroll true, midroll false",
+											"pm.test(\"Test 5: check ad_rule.live values. preroll true, midroll false\", function () {",
+											"    const live = config.ad_rules?.live;",
+											"    console.log(\"ad_rules.live:\", live);",
+											"",
+											"    pm.expect(live, \"live config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(live.preroll, `Expected live.preroll to be true, but got: ${live?.preroll}`).to.be.true;",
+											"    pm.expect(live.midroll, `Expected live.midroll to be false, but got: ${live?.midroll}`).to.be.false;",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// const version = pm.variables.get(\"mako_ios_version\");",
+											"// const configUrl = `https://apps.mako.co.il/mobile/config/mako/ios/${version}/mainConfig.json`;",
+											"",
+											"// pm.sendRequest({",
+											"//     url: configUrl,",
+											"//     method: 'GET'",
+											"// }, function (err, res) {",
+											"//     if (err) {",
+											"//         console.error(\"Failed to fetch config:\", err);",
+											"//         throw new Error(\"Config request failed\");",
+											"//     }",
+											"",
+											"//     const json = res.json();",
+											"//     const playerUrl = json.sources?.player;",
+											"",
+											"//     console.log(\"player config URL:\", playerUrl);",
+											"//     pm.expect(playerUrl, \"Player config URL is missing or not defined\").to.exist;",
+											"",
+											"//     pm.environment.set(\"player_url\", playerUrl);",
+											"// });",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{mako_ios_player_url}}",
+									"host": [
+										"{{mako_ios_player_url}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "android",
+					"item": [
+						{
+							"name": "mainConfig",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"// ✅ Test 1: Validate pushTag does not contain debug",
+											"pm.test(\"Test 1: pushTag does not contain 'debug'\", function () {",
+											"    const pushTag = json.params?.pushTag;",
+											"    pm.expect(pushTag, \"pushTag is missing or not a string\").to.be.a(\"string\");",
+											"    console.log(\"pushTag:\", pushTag);",
+											"    pm.expect(pushTag.toLowerCase(), `'pushTag' contains 'debug': ${pushTag}`).to.not.include(\"debug\");",
+											"});",
+											"",
+											"",
+											"// ✅ Test 2: Validate all source URLs do not contain 'test' 'int' and 'dev'",
+											"pm.test(\"Test 2: sources URLs do not contain 'test', 'int', or 'dev'\", function () {",
+											"    const sources = json.sources || {};",
+											"    const forbidden = [\"test\", \"int\", \"renderint\"];",
+											"    const urls = Object.values(sources);",
+											"",
+											"    console.log(\"All source URLs:\", urls);",
+											"    pm.expect(urls.length, \"No URLs found in sources\").to.be.above(0);",
+											"",
+											"    const offendingUrls = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().includes(part))",
+											"    );",
+											"",
+											"    const offendingUrlsDev = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().replaceAll('device',' ').includes('dev'))",
+											"    );",
+											"",
+											"    const allOffendingUrls = [...offendingUrls, ...offendingUrlsDev];",
+											"    console.log(\"Offending URLs (forbidden content):\", allOffendingUrls);",
+											"",
+											"    pm.expect(allOffendingUrls.length, `Found forbidden URLs: ${allOffendingUrls.join(', ')}`).to.equal(0);",
+											"});",
+											"",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://apps.mako.co.il/mobile/config/mako/android/16.0/mainConfig.json",
+									"protocol": "https",
+									"host": [
+										"apps",
+										"mako",
+										"co",
+										"il"
+									],
+									"path": [
+										"mobile",
+										"config",
+										"mako",
+										"android",
+										"16.0",
+										"mainConfig.json"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "12+",
+			"item": [
+				{
+					"name": "ios",
+					"item": [
+						{
+							"name": "mainConfig",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"// ✅ Test 1: Validate pushTag does not contain debug",
+											"pm.test(\"Test 1: pushTag does not contain 'debug'\", function () {",
+											"    const pushTag = json.params?.pushTag;",
+											"    pm.expect(pushTag, \"pushTag is missing or not a string\").to.be.a(\"string\");",
+											"    console.log(\"pushTag:\", pushTag);",
+											"    pm.expect(pushTag.toLowerCase(), `'pushTag' contains 'debug': ${pushTag}`).to.not.include(\"debug\");",
+											"});",
+											"",
+											"// ✅ Test 2: Validate defaultIU is '/242748299/makoTV/'",
+											"pm.test(\"Test 2: default_iu is '/242748299/makoTV/'\", function () {",
+											"    pm.expect(json.params?.default_iu, \"defaultIU is missing or not a string\").to.be.a(\"string\");",
+											"    const default_iu = json.params?.default_iu;",
+											"    const expected = \"/242748299/makoTV/\";",
+											"    console.log(\"default_iu:\", default_iu);",
+											"    pm.expect(default_iu, `Expected defaultIU to be '${expected}' but got '${default_iu}'`).to.eql(expected);",
+											"});",
+											"",
+											"// ✅ Test 3: Validate playerConsumer is 'mobileApp'",
+											"pm.test(\"Test 3: playerConsumer is 'mobileApp'\", function () {",
+											"    pm.expect(json.params?.playerConsumer, \"playerConsumer is missing or not a string\").to.be.a(\"string\");",
+											"    const playerConsumer = json.params?.playerConsumer;",
+											"    const expected = \"mobileApp\";",
+											"    console.log(\"playerConsumer:\", playerConsumer);",
+											"    pm.expect(playerConsumer, `Expected playerConsumer to be '${expected}' but got '${playerConsumer}'`).to.eql(expected);",
+											"});",
+											"",
+											"// ✅ Test 4: Validate all source URLs do not contain 'test' 'int' and 'dev'",
+											"pm.test(\"Test 4: sources URLs do not contain 'test', 'int', or 'dev'\", function () {",
+											"    const sources = json.sources || {};",
+											"    const forbidden = [\"test\", \"int\", \"renderint\"];",
+											"     let urls = [];",
+											"",
+											"    function extractStrings(obj) {",
+											"        for (let key in obj) {",
+											"            if (!obj.hasOwnProperty(key)) continue;",
+											"",
+											"            const value = obj[key];",
+											"            if (typeof value === \"string\") {",
+											"                urls.push(value);",
+											"            } else if (typeof value === \"object\" && value !== null) {",
+											"                extractStrings(value);",
+											"            }",
+											"        }",
+											"    }",
+											"",
+											"    extractStrings(sources);",
+											"",
+											"    console.log(\"All source URLs:\", urls);",
+											"    pm.expect(urls.length, \"No URLs found in sources\").to.be.above(0);",
+											"",
+											"    const offendingUrls = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().includes(part))",
+											"    );",
+											"",
+											"    const offendingUrlsDev = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().replaceAll('device',' ').includes('dev'))",
+											"    );",
+											"",
+											"    const allOffendingUrls = [...offendingUrls, ...offendingUrlsDev];",
+											"    console.log(\"Offending URLs (forbidden content):\", allOffendingUrls);",
+											"",
+											"    pm.expect(allOffendingUrls.length, `Found forbidden URLs: ${allOffendingUrls.join(', ')}`).to.equal(0);",
+											"});",
+											"",
+											"// ✅ Test 5: Check player config URL exist",
+											"pm.test(\"Test 5: Player config URL exists and is a valid URL\", function () {",
+											"    const playerUrl = json.sources?.player;",
+											"    console.log(\"player config URL:\", playerUrl);",
+											"    pm.expect(playerUrl, \"Player config URL is missing or not defined\").to.exist;",
+											"    pm.expect(playerUrl, `Player config URL is invalid: ${playerUrl}`).to.match(/^https:\\/\\/.+\\.json$/);",
+											"});",
+											"",
+											"let playerUrl = json.sources.player;",
+											"pm.collectionVariables.set(\"12plus_ios_player_url\", playerUrl);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://apps.mako.co.il/mobile/config/12Plus/ios/mobile/16.0/mainConfig.json",
+									"protocol": "https",
+									"host": [
+										"apps",
+										"mako",
+										"co",
+										"il"
+									],
+									"path": [
+										"mobile",
+										"config",
+										"12Plus",
+										"ios",
+										"mobile",
+										"16.0",
+										"mainConfig.json"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "playerConfig - RUN mainConfig to update url",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const config = pm.response.json();",
+											"",
+											"// ✅ Test 1: dfp_ad_tag contains 'slotname=%IU%'",
+											"pm.test(\"Test 1: dfp_ad_tag contains 'slotname=%IU%'\", function () {",
+											"    const adTag = config.params?.advertising?.dfp_ad_tag || \"\";",
+											"    console.log(\"dfp_ad_tag:\", adTag);",
+											"    pm.expect(adTag, `Expected dfp_ad_tag to be a string, got: ${typeof adTag}`).to.be.a(\"string\");",
+											"    pm.expect(adTag.includes(\"slotname=%IU%\"), `dfp_ad_tag does not include 'slotname=%IU%': ${adTag}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 2: terminalLog value is false",
+											"pm.test(\"Test 2: terminalLog value is false\", function () {",
+											"    const terminalLog = config.params?.terminalLog;",
+											"    console.log(\"terminalLog:\", terminalLog);",
+											"    pm.expect(typeof terminalLog, `Expected terminalLog to be boolean, got: ${typeof terminalLog}`).to.equal(\"boolean\");",
+											"    pm.expect(terminalLog, `Expected terminalLog to be false, but got: ${terminalLog}`).to.eql(false);",
+											"});",
+											"",
+											"// ✅ Test 3: stopWatchingTime player and teaser values are greater than 1000",
+											"pm.test(\"Test 3: stopWatchingTime player and teaser values are all greater than 1000\", function () {",
+											"    const stopTimes = config.params?.stopWatchingTime || {};",
+											"    console.log(\"stopWatchingTime values:\", stopTimes);",
+											"",
+											"    pm.expect(stopTimes, \"stopWatchingTime is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"",
+											"    const threshold = 1000;",
+											"    pm.expect(stopTimes.player,' player value is smaller then ' + threshold).to.be.greaterThan(threshold);",
+											"    pm.expect(stopTimes.pip,' teaser value is smaller then ' + threshold).to.be.greaterThan(threshold);",
+											"});",
+											"",
+											"// ✅ Test 4:  Check vod ad_rules values. preroll and midroll are true",
+											"pm.test(\"Test 4: Check ad_rules.vod values. preroll and midroll are true\", function () {",
+											"    const vod = config.ad_rules?.vod;",
+											"    console.log(\"ad_rules.vod:\", vod);",
+											"",
+											"    pm.expect(vod, \"vod config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(vod.preroll, `Expected vod.preroll to be true, but got: ${vod?.preroll}`).to.be.true;",
+											"    pm.expect(vod.midroll, `Expected vod.midroll to be true, but got: ${vod?.midroll}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 5: check ad_rule.live values. preroll true",
+											"pm.test(\"Test 5: check ad_rule.live values. preroll true\", function () {",
+											"    const live = config.ad_rules?.live;",
+											"    console.log(\"ad_rules.live:\", live);",
+											"",
+											"    pm.expect(live, \"live config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(live.preroll, `Expected live.preroll to be true, but got: ${live?.preroll}`).to.be.true;",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// const version = pm.variables.get(\"mako_ios_version\");",
+											"// const configUrl = `https://apps.mako.co.il/mobile/config/mako/ios/${version}/mainConfig.json`;",
+											"",
+											"// pm.sendRequest({",
+											"//     url: configUrl,",
+											"//     method: 'GET'",
+											"// }, function (err, res) {",
+											"//     if (err) {",
+											"//         console.error(\"Failed to fetch config:\", err);",
+											"//         throw new Error(\"Config request failed\");",
+											"//     }",
+											"",
+											"//     const json = res.json();",
+											"//     const playerUrl = json.sources?.player;",
+											"",
+											"//     console.log(\"player config URL:\", playerUrl);",
+											"//     pm.expect(playerUrl, \"Player config URL is missing or not defined\").to.exist;",
+											"",
+											"//     pm.environment.set(\"player_url\", playerUrl);",
+											"// });",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{12plus_ios_player_url}}",
+									"host": [
+										"{{12plus_ios_player_url}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "ios TV",
+					"item": [
+						{
+							"name": "mainConfig",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"// ✅ Test 1: Validate playerConsumer is 'smartTV'",
+											"pm.test(\"Test 1: playerConsumer is 'smartTV'\", function () {",
+											"    pm.expect(json.params?.playerConsumer, \"playerConsumer is missing or not a string\").to.be.a(\"string\");",
+											"    const playerConsumer = json.params?.playerConsumer;",
+											"    const expected = \"smartTV\";",
+											"    console.log(\"playerConsumer:\", playerConsumer);",
+											"    pm.expect(playerConsumer, `Expected playerConsumer to be '${expected}' but got '${playerConsumer}'`).to.eql(expected);",
+											"});",
+											"",
+											"// ✅ Test 2: Validate all source URLs do not contain 'test' 'int' and 'dev'",
+											"pm.test(\"Test 2: sources URLs do not contain 'test', 'int', or 'dev'\", function () {",
+											"    const sources = json.sources || {};",
+											"    const forbidden = [\"test\", \"int\", \"renderint\"];",
+											"     let urls = [];",
+											"",
+											"    function extractStrings(obj) {",
+											"        for (let key in obj) {",
+											"            if (!obj.hasOwnProperty(key)) continue;",
+											"",
+											"            const value = obj[key];",
+											"            if (typeof value === \"string\") {",
+											"                urls.push(value);",
+											"            } else if (typeof value === \"object\" && value !== null) {",
+											"                extractStrings(value);",
+											"            }",
+											"        }",
+											"    }",
+											"",
+											"    extractStrings(sources);",
+											"",
+											"    console.log(\"All source URLs:\", urls);",
+											"    pm.expect(urls.length, \"No URLs found in sources\").to.be.above(0);",
+											"",
+											"    const offendingUrls = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().includes(part))",
+											"    );",
+											"",
+											"    const offendingUrlsDev = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().replaceAll('device',' ').includes('dev'))",
+											"    );",
+											"",
+											"    const allOffendingUrls = [...offendingUrls, ...offendingUrlsDev];",
+											"    console.log(\"Offending URLs (forbidden content):\", allOffendingUrls);",
+											"",
+											"    pm.expect(allOffendingUrls.length, `Found forbidden URLs: ${allOffendingUrls.join(', ')}`).to.equal(0);",
+											"});",
+											"",
+											"// ✅ Test 3: Check player config URL exist",
+											"pm.test(\"Test 3: Player config URL exists and is a valid URL\", function () {",
+											"    const playerUrl = json.sources?.player;",
+											"    console.log(\"player config URL:\", playerUrl);",
+											"    pm.expect(playerUrl, \"Player config URL is missing or not defined\").to.exist;",
+											"    pm.expect(playerUrl, `Player config URL is invalid: ${playerUrl}`).to.match(/^https:\\/\\/.+\\.json$/);",
+											"});",
+											"",
+											"let playerUrl = json.sources.player;",
+											"pm.collectionVariables.set(\"12plus_ios_tv_player_url\", playerUrl);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://apps.mako.co.il/mobile/config/12Plus/ios/tv/10.0/mainConfig.json",
+									"protocol": "https",
+									"host": [
+										"apps",
+										"mako",
+										"co",
+										"il"
+									],
+									"path": [
+										"mobile",
+										"config",
+										"12Plus",
+										"ios",
+										"tv",
+										"10.0",
+										"mainConfig.json"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "playerConfig - RUN mainConfig to update url",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const config = pm.response.json();",
+											"",
+											"// ✅ Test 1: dfp_ad_tag contains 'slotname=%IU%'",
+											"pm.test(\"Test 1: dfp_ad_tag contains 'slotname=%IU%'\", function () {",
+											"    const adTag = config.params?.advertising?.dfp_ad_tag || \"\";",
+											"    console.log(\"dfp_ad_tag:\", adTag);",
+											"    pm.expect(adTag, `Expected dfp_ad_tag to be a string, got: ${typeof adTag}`).to.be.a(\"string\");",
+											"    pm.expect(adTag.includes(\"slotname=%IU%\"), `dfp_ad_tag does not include 'slotname=%IU%': ${adTag}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 2: pauseAdUrl contains 'slotname=%IU%'",
+											"pm.test(\"Test 2: pauseAdUrl contains 'slotname=%IU%'\", function () {",
+											"    const adTag = config.params?.advertising?.pauseAdUrl || \"\";",
+											"    console.log(\"pauseAdUrl:\", adTag);",
+											"    pm.expect(adTag, `Expected pauseAdUrl to be a string, got: ${typeof adTag}`).to.be.a(\"string\");",
+											"    pm.expect(adTag.includes(\"iu=%IU%\"), `pauseAdUrl does not include 'iu=%IU%': ${adTag}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 3: terminalLog value is false",
+											"pm.test(\"Test 3: terminalLog value is false\", function () {",
+											"    const terminalLog = config.params?.terminalLog;",
+											"    console.log(\"terminalLog:\", terminalLog);",
+											"    pm.expect(typeof terminalLog, `Expected terminalLog to be boolean, got: ${typeof terminalLog}`).to.equal(\"boolean\");",
+											"    pm.expect(terminalLog, `Expected terminalLog to be false, but got: ${terminalLog}`).to.eql(false);",
+											"});",
+											"",
+											"// ✅ Test 4: player at stopWatchingTime value is greater than 1000",
+											"pm.test(\"Test 4: stopWatchingTime values are all greater than 1000\", function () {",
+											"    const stopTimes = config.params?.stopWatchingTime || {};",
+											"    console.log(\"stopWatchingTime values:\", stopTimes);",
+											"",
+											"    pm.expect(stopTimes, \"stopWatchingTime is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"",
+											"    const threshold = 1000;",
+											"    pm.expect(stopTimes.player,' player value is smaller then ' + threshold).to.be.greaterThan(threshold);",
+											"});",
+											"",
+											"// ✅ Test 5:  Check vod ad_rules values. preroll and midroll are true",
+											"pm.test(\"Test 5: Check ad_rules.vod values. preroll and midroll are true\", function () {",
+											"    const vod = config.ad_rules?.vod;",
+											"    console.log(\"ad_rules.vod:\", vod);",
+											"",
+											"    pm.expect(vod, \"vod config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(vod.preroll, `Expected vod.preroll to be true, but got: ${vod?.preroll}`).to.be.true;",
+											"    pm.expect(vod.midroll, `Expected vod.midroll to be true, but got: ${vod?.midroll}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 6: check ad_rule.live values. preroll true, midroll false",
+											"pm.test(\"Test 6: check ad_rule.live values. preroll true, midroll false\", function () {",
+											"    const live = config.ad_rules?.live;",
+											"    console.log(\"ad_rules.live:\", live);",
+											"",
+											"    pm.expect(live, \"live config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(live.preroll, `Expected live.preroll to be true, but got: ${live?.preroll}`).to.be.true;",
+											"    pm.expect(live.midroll, `Expected live.midroll to be false, but got: ${live?.midroll}`).to.be.false;",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// const version = pm.variables.get(\"mako_ios_version\");",
+											"// const configUrl = `https://apps.mako.co.il/mobile/config/mako/ios/${version}/mainConfig.json`;",
+											"",
+											"// pm.sendRequest({",
+											"//     url: configUrl,",
+											"//     method: 'GET'",
+											"// }, function (err, res) {",
+											"//     if (err) {",
+											"//         console.error(\"Failed to fetch config:\", err);",
+											"//         throw new Error(\"Config request failed\");",
+											"//     }",
+											"",
+											"//     const json = res.json();",
+											"//     const playerUrl = json.sources?.player;",
+											"",
+											"//     console.log(\"player config URL:\", playerUrl);",
+											"//     pm.expect(playerUrl, \"Player config URL is missing or not defined\").to.exist;",
+											"",
+											"//     pm.environment.set(\"player_url\", playerUrl);",
+											"// });",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{12plus_ios_tv_player_url}}",
+									"host": [
+										"{{12plus_ios_tv_player_url}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "android",
+					"item": [
+						{
+							"name": "mainConfig",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"// ✅ Test 1: Validate pushTag does not contain debug",
+											"pm.test(\"Test 1: pushTag does not contain 'debug'\", function () {",
+											"    const pushTag = json.params?.pushTag;",
+											"    pm.expect(pushTag, \"pushTag is missing or not a string\").to.be.a(\"string\");",
+											"    console.log(\"pushTag:\", pushTag);",
+											"    pm.expect(pushTag.toLowerCase(), `'pushTag' contains 'debug': ${pushTag}`).to.not.include(\"debug\");",
+											"});",
+											"",
+											"// ✅ Test 2: Validate defaultIU is '/242748299/makoTV/'",
+											"pm.test(\"Test 2: default_iu is '/242748299/makoTV/'\", function () {",
+											"    pm.expect(json.params?.default_iu, \"defaultIU is missing or not a string\").to.be.a(\"string\");",
+											"    const default_iu = json.params?.default_iu;",
+											"    const expected = \"/242748299/makoTV/\";",
+											"    console.log(\"default_iu:\", default_iu);",
+											"    pm.expect(default_iu, `Expected defaultIU to be '${expected}' but got '${default_iu}'`).to.eql(expected);",
+											"});",
+											"",
+											"// ✅ Test 3: Validate playerConsumer is 'mobileApp'",
+											"pm.test(\"Test 3: playerConsumer is 'mobileApp'\", function () {",
+											"    pm.expect(json.params?.playerConsumer, \"playerConsumer is missing or not a string\").to.be.a(\"string\");",
+											"    const playerConsumer = json.params?.playerConsumer;",
+											"    const expected = \"mobileApp\";",
+											"    console.log(\"playerConsumer:\", playerConsumer);",
+											"    pm.expect(playerConsumer, `Expected playerConsumer to be '${expected}' but got '${playerConsumer}'`).to.eql(expected);",
+											"});",
+											"",
+											"// ✅ Test 4: Validate all source URLs do not contain 'test' 'int' and 'dev'",
+											"pm.test(\"Test 4: sources URLs do not contain 'test', 'int', or 'dev'\", function () {",
+											"    const sources = json.sources || {};",
+											"    const forbidden = [\"test\", \"int\", \"renderint\"];",
+											"     let urls = [];",
+											"",
+											"    function extractStrings(obj) {",
+											"        for (let key in obj) {",
+											"            if (!obj.hasOwnProperty(key)) continue;",
+											"",
+											"            const value = obj[key];",
+											"            if (typeof value === \"string\") {",
+											"                urls.push(value);",
+											"            } else if (typeof value === \"object\" && value !== null) {",
+											"                extractStrings(value);",
+											"            }",
+											"        }",
+											"    }",
+											"",
+											"    extractStrings(sources);",
+											"",
+											"    console.log(\"All source URLs:\", urls);",
+											"    pm.expect(urls.length, \"No URLs found in sources\").to.be.above(0);",
+											"",
+											"    const offendingUrls = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().includes(part))",
+											"    );",
+											"",
+											"    const offendingUrlsDev = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().replaceAll('device',' ').includes('dev'))",
+											"    );",
+											"",
+											"    const allOffendingUrls = [...offendingUrls, ...offendingUrlsDev];",
+											"    console.log(\"Offending URLs (forbidden content):\", allOffendingUrls);",
+											"",
+											"    pm.expect(allOffendingUrls.length, `Found forbidden URLs: ${allOffendingUrls.join(', ')}`).to.equal(0);",
+											"});",
+											"",
+											"// ✅ Test 5: Check player config URL exist",
+											"pm.test(\"Test 5: Player config URL exists and is a valid URL\", function () {",
+											"    const playerUrl = json.sources?.ksCoreConfig;",
+											"    console.log(\"player config URL:\", playerUrl);",
+											"    pm.expect(playerUrl, \"Player config URL is missing or not defined\").to.exist;",
+											"    pm.expect(playerUrl, `Player config URL is invalid: ${playerUrl}`).to.match(/^https:\\/\\/.+\\.json$/);",
+											"});",
+											"",
+											"let playerUrl = json.sources.ksCoreConfig;",
+											"pm.collectionVariables.set(\"12plus_android_player_url\", playerUrl);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://apps.mako.co.il/mobile/config/12Plus/android/mobile/21.0/mainConfig.json",
+									"protocol": "https",
+									"host": [
+										"apps",
+										"mako",
+										"co",
+										"il"
+									],
+									"path": [
+										"mobile",
+										"config",
+										"12Plus",
+										"android",
+										"mobile",
+										"21.0",
+										"mainConfig.json"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "playerConfig - RUN mainConfig to update url",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const config = pm.response.json();",
+											"",
+											"// ✅ Test 1: dfp_ad_tag contains 'slotname=%IU%'",
+											"pm.test(\"Test 1: dfp_ad_tag contains 'slotname=%IU%'\", function () {",
+											"    const adTag = config.params?.advertising?.dfp_ad_tag || \"\";",
+											"    console.log(\"dfp_ad_tag:\", adTag);",
+											"    pm.expect(adTag, `Expected dfp_ad_tag to be a string, got: ${typeof adTag}`).to.be.a(\"string\");",
+											"    pm.expect(adTag.includes(\"slotname=%IU%\"), `dfp_ad_tag does not include 'slotname=%IU%': ${adTag}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 2: terminalLog value is false",
+											"pm.test(\"Test 2: terminalLog value is false\", function () {",
+											"    const terminalLog = config.params?.terminalLog;",
+											"    console.log(\"terminalLog:\", terminalLog);",
+											"    pm.expect(typeof terminalLog, `Expected terminalLog to be boolean, got: ${typeof terminalLog}`).to.equal(\"boolean\");",
+											"    pm.expect(terminalLog, `Expected terminalLog to be false, but got: ${terminalLog}`).to.eql(false);",
+											"});",
+											"",
+											"// ✅ Test 3: stopWatchingTime player and teaser values are greater than 1000",
+											"pm.test(\"Test 3: stopWatchingTime player and teaser values are all greater than 1000\", function () {",
+											"    const stopTimes = config.params?.stopWatchingTime || {};",
+											"    console.log(\"stopWatchingTime values:\", stopTimes);",
+											"",
+											"    pm.expect(stopTimes, \"stopWatchingTime is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"",
+											"    const threshold = 1000;",
+											"    pm.expect(stopTimes.player,' player value is smaller then ' + threshold).to.be.greaterThan(threshold);",
+											"    pm.expect(stopTimes.pip,' teaser value is smaller then ' + threshold).to.be.greaterThan(threshold);",
+											"});",
+											"",
+											"// ✅ Test 4:  Check vod ad_rules values. preroll and midroll are true",
+											"pm.test(\"Test 4: Check ad_rules.vod values. preroll and midroll are true\", function () {",
+											"    const vod = config.ad_rules?.vod;",
+											"    console.log(\"ad_rules.vod:\", vod);",
+											"",
+											"    pm.expect(vod, \"vod config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(vod.preroll, `Expected vod.preroll to be true, but got: ${vod?.preroll}`).to.be.true;",
+											"    pm.expect(vod.midroll, `Expected vod.midroll to be true, but got: ${vod?.midroll}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 5: check ad_rule.live values. preroll true",
+											"pm.test(\"Test 5: check ad_rule.live values. preroll true\", function () {",
+											"    const live = config.ad_rules?.live;",
+											"    console.log(\"ad_rules.live:\", live);",
+											"",
+											"    pm.expect(live, \"live config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(live.preroll, `Expected live.preroll to be true, but got: ${live?.preroll}`).to.be.true;",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{12plus_android_player_url}}",
+									"host": [
+										"{{12plus_android_player_url}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "android TV",
+					"item": [
+						{
+							"name": "mainConfig",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"// ✅ Test 1: Validate playerConsumer is 'smartTV'",
+											"pm.test(\"Test 1: playerConsumer is 'smartTV'\", function () {",
+											"    pm.expect(json.params?.playerConsumer, \"playerConsumer is missing or not a string\").to.be.a(\"string\");",
+											"    const playerConsumer = json.params?.playerConsumer;",
+											"    const expected = \"smartTV\";",
+											"    console.log(\"playerConsumer:\", playerConsumer);",
+											"    pm.expect(playerConsumer, `Expected playerConsumer to be '${expected}' but got '${playerConsumer}'`).to.eql(expected);",
+											"});",
+											"",
+											"// ✅ Test 2: Validate all source URLs do not contain 'test' 'int' and 'dev'",
+											"pm.test(\"Test 2: sources URLs do not contain 'test', 'int', or 'dev'\", function () {",
+											"    const sources = json.sources || {};",
+											"    const forbidden = [\"test\", \"int\", \"renderint\"];",
+											"     let urls = [];",
+											"",
+											"    function extractStrings(obj) {",
+											"        for (let key in obj) {",
+											"            if (!obj.hasOwnProperty(key)) continue;",
+											"",
+											"            const value = obj[key];",
+											"            if (typeof value === \"string\") {",
+											"                urls.push(value);",
+											"            } else if (typeof value === \"object\" && value !== null) {",
+											"                extractStrings(value);",
+											"            }",
+											"        }",
+											"    }",
+											"",
+											"    extractStrings(sources);",
+											"",
+											"    console.log(\"All source URLs:\", urls);",
+											"    pm.expect(urls.length, \"No URLs found in sources\").to.be.above(0);",
+											"",
+											"    const offendingUrls = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().includes(part))",
+											"    );",
+											"",
+											"    const offendingUrlsDev = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().replaceAll('device',' ').includes('dev'))",
+											"    );",
+											"",
+											"    const allOffendingUrls = [...offendingUrls, ...offendingUrlsDev];",
+											"    console.log(\"Offending URLs (forbidden content):\", allOffendingUrls);",
+											"",
+											"    pm.expect(allOffendingUrls.length, `Found forbidden URLs: ${allOffendingUrls.join(', ')}`).to.equal(0);",
+											"});",
+											"",
+											"// ✅ Test 3: Check player config URL exist",
+											"pm.test(\"Test 3: Player config URL exists and is a valid URL\", function () {",
+											"    const playerUrl = json.sources?.core;",
+											"    console.log(\"player config URL:\", playerUrl);",
+											"    pm.expect(playerUrl, \"Player config URL is missing or not defined\").to.exist;",
+											"    pm.expect(playerUrl, `Player config URL is invalid: ${playerUrl}`).to.match(/^https:\\/\\/.+\\.json$/);",
+											"});",
+											"",
+											"let playerUrl = json.sources.core;",
+											"pm.collectionVariables.set(\"12plus_android_tv_player_url\", playerUrl);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://apps.mako.co.il/mobile/config/12Plus/android/tv/23.0/mainConfig.json",
+									"protocol": "https",
+									"host": [
+										"apps",
+										"mako",
+										"co",
+										"il"
+									],
+									"path": [
+										"mobile",
+										"config",
+										"12Plus",
+										"android",
+										"tv",
+										"23.0",
+										"mainConfig.json"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "playerConfig - RUN mainConfig to update url",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const config = pm.response.json();",
+											"",
+											"// ✅ Test 1: dfp_ad_tag contains 'slotname=%IU%'",
+											"pm.test(\"Test 1: dfp_ad_tag contains 'slotname=%IU%'\", function () {",
+											"    const adTag = config.params?.advertising?.dfp_ad_tag || \"\";",
+											"    console.log(\"dfp_ad_tag:\", adTag);",
+											"    pm.expect(adTag, `Expected dfp_ad_tag to be a string, got: ${typeof adTag}`).to.be.a(\"string\");",
+											"    pm.expect(adTag.includes(\"slotname=%IU%\"), `dfp_ad_tag does not include 'slotname=%IU%': ${adTag}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 2: pauseAdUrl contains 'slotname=%IU%'",
+											"pm.test(\"Test 2: pauseAdUrl contains 'slotname=%IU%'\", function () {",
+											"    const adTag = config.params?.advertising?.pauseAdUrl || \"\";",
+											"    console.log(\"pauseAdUrl:\", adTag);",
+											"    pm.expect(adTag, `Expected pauseAdUrl to be a string, got: ${typeof adTag}`).to.be.a(\"string\");",
+											"    pm.expect(adTag.includes(\"iu=%IU%\"), `pauseAdUrl does not include 'iu=%IU%': ${adTag}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 3: terminalLog value is false",
+											"pm.test(\"Test 3: terminalLog value is false\", function () {",
+											"    const terminalLog = config.params?.terminalLog;",
+											"    console.log(\"terminalLog:\", terminalLog);",
+											"    pm.expect(typeof terminalLog, `Expected terminalLog to be boolean, got: ${typeof terminalLog}`).to.equal(\"boolean\");",
+											"    pm.expect(terminalLog, `Expected terminalLog to be false, but got: ${terminalLog}`).to.eql(false);",
+											"});",
+											"",
+											"// ✅ Test 4: player at stopWatchingTime value is greater than 1000",
+											"pm.test(\"Test 4: stopWatchingTime values are all greater than 1000\", function () {",
+											"    const stopTimes = config.params?.stopWatchingTime || {};",
+											"    console.log(\"stopWatchingTime values:\", stopTimes);",
+											"",
+											"    pm.expect(stopTimes, \"stopWatchingTime is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"",
+											"    const threshold = 1000;",
+											"    pm.expect(stopTimes.player,' player value is smaller then ' + threshold).to.be.greaterThan(threshold);",
+											"});",
+											"",
+											"// ✅ Test 5:  Check vod ad_rules values. preroll and midroll are true",
+											"pm.test(\"Test 5: Check ad_rules.vod values. preroll and midroll are true\", function () {",
+											"    const vod = config.ad_rules?.vod;",
+											"    console.log(\"ad_rules.vod:\", vod);",
+											"",
+											"    pm.expect(vod, \"vod config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(vod.preroll, `Expected vod.preroll to be true, but got: ${vod?.preroll}`).to.be.true;",
+											"    pm.expect(vod.midroll, `Expected vod.midroll to be true, but got: ${vod?.midroll}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 6: check ad_rule.live values. preroll true, midroll false",
+											"pm.test(\"Test 6: check ad_rule.live values. preroll true, midroll false\", function () {",
+											"    const live = config.ad_rules?.live;",
+											"    console.log(\"ad_rules.live:\", live);",
+											"",
+											"    pm.expect(live, \"live config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(live.preroll, `Expected live.preroll to be true, but got: ${live?.preroll}`).to.be.true;",
+											"    pm.expect(live.midroll, `Expected live.midroll to be false, but got: ${live?.midroll}`).to.be.false;",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{12plus_android_tv_player_url}}",
+									"host": [
+										"{{12plus_android_tv_player_url}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "V1",
+			"item": [
+				{
+					"name": "ios",
+					"item": [
+						{
+							"name": "mainConfig",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"// ✅ Test 1: Validate pushTag does not contain debug",
+											"pm.test(\"Test 1: pushTag does not contain 'debug'\", function () {",
+											"    const pushTag = json.params?.pushTag;",
+											"    pm.expect(pushTag, \"pushTag is missing or not a string\").to.be.a(\"string\");",
+											"    console.log(\"pushTag:\", pushTag);",
+											"    pm.expect(pushTag.toLowerCase(), `'pushTag' contains 'debug': ${pushTag}`).to.not.include(\"debug\");",
+											"});",
+											"",
+											"// ✅ Test 2: Validate defaultIU is '/242748299/V1_APP'",
+											"pm.test(\"Test 2: defaultIU is '/242748299/V1_APP'\", function () {",
+											"    pm.expect(json.params?.defaultIU, \"defaultIU is missing or not a string\").to.be.a(\"string\");",
+											"    const defaultIU = json.params?.defaultIU;",
+											"    const expected = \"/242748299/V1_APP\";",
+											"    console.log(\"defaultIU:\", defaultIU);",
+											"    pm.expect(defaultIU, `Expected defaultIU to be '${expected}' but got '${defaultIU}'`).to.eql(expected);",
+											"});",
+											"",
+											"// ✅ Test 3: Validate all source URLs do not contain 'test' 'int' and 'dev'",
+											"pm.test(\"Test 3: sources URLs do not contain 'test', 'int', or 'dev'\", function () {",
+											"    const sources = json.sources || {};",
+											"    const forbidden = [\"test\", \"int\"];",
+											"    const urls = Object.values(sources);",
+											"",
+											"    console.log(\"All source URLs:\", urls);",
+											"    pm.expect(urls.length, \"No URLs found in sources\").to.be.above(0);",
+											"",
+											"    const offendingUrls = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().includes(part))",
+											"    );",
+											"",
+											"    const offendingUrlsDev = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().replaceAll('device',' ').includes('dev'))",
+											"    );",
+											"",
+											"    const allOffendingUrls = [...offendingUrls, ...offendingUrlsDev];",
+											"    console.log(\"Offending URLs (forbidden content):\", allOffendingUrls);",
+											"",
+											"    pm.expect(allOffendingUrls.length, `Found forbidden URLs: ${allOffendingUrls.join(', ')}`).to.equal(0);",
+											"});",
+											"",
+											"// ✅ Test 4: terminalLogEnable value is false",
+											"pm.test(\"Test 4: terminalLogEnable value is false\", function () {",
+											"    const terminalLogEnable = json.params?.terminalLogEnable;",
+											"    console.log(\"terminalLog:\", terminalLogEnable);",
+											"    pm.expect(typeof terminalLogEnable, `Expected terminalLogEnable to be boolean, got: ${typeof terminalLogEnable}`).to.equal(\"boolean\");",
+											"    pm.expect(terminalLogEnable, `Expected terminalLogEnable to be false, but got: ${terminalLogEnable}`).to.eql(false);",
+											"});",
+											"",
+											"// ✅ Test 5: Check player config URL exist",
+											"pm.test(\"Test 5: Player config URL exists and is a valid URL\", function () {",
+											"    const playerUrl = json.sources?.core;",
+											"    console.log(\"player config URL:\", playerUrl);",
+											"    pm.expect(playerUrl, \"Player config URL is missing or not defined\").to.exist;",
+											"    pm.expect(playerUrl, `Player config URL is invalid: ${playerUrl}`).to.match(/^https:\\/\\/.+\\.json$/);",
+											"    pm.collectionVariables.set(\"v1_ios_player_url\", playerUrl);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://apps.mako.co.il/mobile/config/V1/ios/18.0/mainConfig.json",
+									"protocol": "https",
+									"host": [
+										"apps",
+										"mako",
+										"co",
+										"il"
+									],
+									"path": [
+										"mobile",
+										"config",
+										"V1",
+										"ios",
+										"18.0",
+										"mainConfig.json"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "playerConfig - RUN mainConfig to update url",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const config = pm.response.json();",
+											"",
+											"// ✅ Test 1: dfp_ad_tag contains 'slotname=%IU%'",
+											"pm.test(\"Test 1: dfp_ad_tag contains 'slotname=%IU%'\", function () {",
+											"    const adTag = config.params?.advertising?.dfp_ad_tag || \"\";",
+											"    console.log(\"dfp_ad_tag:\", adTag);",
+											"    pm.expect(adTag, `Expected dfp_ad_tag to be a string, got: ${typeof adTag}`).to.be.a(\"string\");",
+											"    pm.expect(adTag.includes(\"slotname=%IU%\"), `dfp_ad_tag does not include 'slotname=%IU%': ${adTag}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 2: terminalLog value is false",
+											"pm.test(\"Test 2: terminalLog value is false\", function () {",
+											"    const terminalLog = config.params?.terminalLog;",
+											"    console.log(\"terminalLog:\", terminalLog);",
+											"    pm.expect(typeof terminalLog, `Expected terminalLog to be boolean, got: ${typeof terminalLog}`).to.equal(\"boolean\");",
+											"    pm.expect(terminalLog, `Expected terminalLog to be false, but got: ${terminalLog}`).to.eql(false);",
+											"});",
+											"",
+											"// ✅ Test 3: stopWatchingTime player and teaser values are greater than 1000",
+											"pm.test(\"Test 3: stopWatchingTime player and teaser values are all greater than 1000\", function () {",
+											"    const stopTimes = config.params?.stopWatchingTime || {};",
+											"    console.log(\"stopWatchingTime values:\", stopTimes);",
+											"",
+											"    pm.expect(stopTimes, \"stopWatchingTime is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"",
+											"    const threshold = 1000;",
+											"    pm.expect(stopTimes.player,' player value is smaller then ' + threshold).to.be.greaterThan(threshold);",
+											"    pm.expect(stopTimes.teaser,' teaser value is smaller then ' + threshold).to.be.greaterThan(threshold);",
+											"});",
+											"",
+											"// // ✅ Test 4:  Check vod ad_rules values. preroll and midroll are true",
+											"// pm.test(\"Test 4: Check ad_rules.vod values. preroll and midroll are true\", function () {",
+											"//     const vod = config.ad_rules?.vod;",
+											"//     console.log(\"ad_rules.vod:\", vod);",
+											"",
+											"//     pm.expect(vod, \"vod config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"//     pm.expect(vod.preroll, `Expected vod.preroll to be true, but got: ${vod?.preroll}`).to.be.true;",
+											"//     pm.expect(vod.midroll, `Expected vod.midroll to be true, but got: ${vod?.midroll}`).to.be.true;",
+											"// });",
+											"",
+											"// // ✅ Test 5: check ad_rule.live values. preroll true, midroll false",
+											"// pm.test(\"Test 5: check ad_rule.live values. preroll true, midroll false\", function () {",
+											"//     const live = config.ad_rules?.live;",
+											"//     console.log(\"ad_rules.live:\", live);",
+											"",
+											"//     pm.expect(live, \"live config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"//     pm.expect(live.preroll, `Expected live.preroll to be true, but got: ${live?.preroll}`).to.be.true;",
+											"//     pm.expect(live.midroll, `Expected live.midroll to be false, but got: ${live?.midroll}`).to.be.false;",
+											"// });",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{v1_ios_player_url}}",
+									"host": [
+										"{{v1_ios_player_url}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "android",
+					"item": [
+						{
+							"name": "mainConfig",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"// ✅ Test 1: Validate pushTag does not contain debug",
+											"pm.test(\"Test 1: pushTag does not contain 'debug'\", function () {",
+											"    const pushTag = json.params?.pushTag;",
+											"    pm.expect(pushTag, \"pushTag is missing or not a string\").to.be.a(\"string\");",
+											"    console.log(\"pushTag:\", pushTag);",
+											"    pm.expect(pushTag.toLowerCase(), `'pushTag' contains 'debug': ${pushTag}`).to.not.include(\"debug\");",
+											"});",
+											"",
+											"// ✅ Test 2: Validate defaultIU is '/242748299/V1_APP'",
+											"pm.test(\"Test 2: defaultIU is '/242748299/V1_APP/'\", function () {",
+											"    pm.expect(json.params?.defaultIU, \"defaultIU is missing or not a string\").to.be.a(\"string\");",
+											"    const defaultIU = json.params?.defaultIU;",
+											"    const expected = \"/242748299/V1_APP/\";",
+											"    console.log(\"defaultIU:\", defaultIU);",
+											"    pm.expect(defaultIU, `Expected defaultIU to be '${expected}' but got '${defaultIU}'`).to.eql(expected);",
+											"});",
+											"",
+											"// ✅ Test 3: Validate all source URLs do not contain 'test' 'int' and 'dev'",
+											"pm.test(\"Test 3: sources URLs do not contain 'test', 'int', or 'dev'\", function () {",
+											"    const sources = json.sources || {};",
+											"    const forbidden = [\"test\", \"int\"];",
+											"    const urls = Object.values(sources);",
+											"",
+											"    console.log(\"All source URLs:\", urls);",
+											"    pm.expect(urls.length, \"No URLs found in sources\").to.be.above(0);",
+											"",
+											"    const offendingUrls = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().includes(part))",
+											"    );",
+											"",
+											"    const offendingUrlsDev = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().replaceAll('device',' ').includes('dev'))",
+											"    );",
+											"",
+											"    const allOffendingUrls = [...offendingUrls, ...offendingUrlsDev];",
+											"    console.log(\"Offending URLs (forbidden content):\", allOffendingUrls);",
+											"",
+											"    pm.expect(allOffendingUrls.length, `Found forbidden URLs: ${allOffendingUrls.join(', ')}`).to.equal(0);",
+											"});",
+											"",
+											"// ✅ Test 4: Check player config URL exist",
+											"pm.test(\"Test 4: Player config URL exists and is a valid URL\", function () {",
+											"    const playerUrl = json.sources?.ksCoreConfig;",
+											"    console.log(\"player config URL:\", playerUrl);",
+											"    pm.expect(playerUrl, \"Player config URL is missing or not defined\").to.exist;",
+											"    pm.expect(playerUrl, `Player config URL is invalid: ${playerUrl}`).to.match(/^https:\\/\\/.+\\.json$/);",
+											"    pm.collectionVariables.set(\"v1_android_player_url\", playerUrl);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://apps.mako.co.il/mobile/config/V1/android/9.0/mainConfig.json",
+									"protocol": "https",
+									"host": [
+										"apps",
+										"mako",
+										"co",
+										"il"
+									],
+									"path": [
+										"mobile",
+										"config",
+										"V1",
+										"android",
+										"9.0",
+										"mainConfig.json"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "playerConfig - RUN mainConfig to update url",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const config = pm.response.json();",
+											"",
+											"// ✅ Test 1: dfp_ad_tag contains 'slotname=%IU%'",
+											"pm.test(\"Test 1: dfp_ad_tag contains 'slotname=%IU%'\", function () {",
+											"    const adTag = config.params?.advertising?.dfp_ad_tag || \"\";",
+											"    console.log(\"dfp_ad_tag:\", adTag);",
+											"    pm.expect(adTag, `Expected dfp_ad_tag to be a string, got: ${typeof adTag}`).to.be.a(\"string\");",
+											"    pm.expect(adTag.includes(\"slotname=%IU%\"), `dfp_ad_tag does not include 'slotname=%IU%': ${adTag}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 2: terminalLog value is false",
+											"pm.test(\"Test 2: terminalLog value is false\", function () {",
+											"    const terminalLog = config.params?.terminalLog;",
+											"    console.log(\"terminalLog:\", terminalLog);",
+											"    pm.expect(typeof terminalLog, `Expected terminalLog to be boolean, got: ${typeof terminalLog}`).to.equal(\"boolean\");",
+											"    pm.expect(terminalLog, `Expected terminalLog to be false, but got: ${terminalLog}`).to.eql(false);",
+											"});",
+											"",
+											"// ✅ Test 3: All stopWatchingTime player and teaser values are greater than 1000",
+											"pm.test(\"Test 3: stopWatchingTime player and teaser values are all greater than 1000\", function () {",
+											"    const stopTimes = config.params?.stopWatchingTime || {};",
+											"    console.log(\"stopWatchingTime values:\", stopTimes);",
+											"",
+											"    pm.expect(stopTimes, \"stopWatchingTime is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"",
+											"    const threshold = 1000;",
+											"    pm.expect(stopTimes.player,' player value is smaller then ' + threshold).to.be.greaterThan(threshold);",
+											"    pm.expect(stopTimes.teaser,' teaser value is smaller then ' + threshold).to.be.greaterThan(threshold);",
+											"});",
+											"",
+											"// // ✅ Test 4:  Check vod ad_rules values. preroll and midroll are true",
+											"// pm.test(\"Test 4: Check ad_rules.vod values. preroll and midroll are true\", function () {",
+											"//     const vod = config.ad_rules?.vod;",
+											"//     console.log(\"ad_rules.vod:\", vod);",
+											"",
+											"//     pm.expect(vod, \"vod config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"//     pm.expect(vod.preroll, `Expected vod.preroll to be true, but got: ${vod?.preroll}`).to.be.true;",
+											"//     pm.expect(vod.midroll, `Expected vod.midroll to be true, but got: ${vod?.midroll}`).to.be.true;",
+											"// });",
+											"",
+											"// // ✅ Test 5: check ad_rule.live values. preroll true, midroll false",
+											"// pm.test(\"Test 5: check ad_rule.live values. preroll true, midroll false\", function () {",
+											"//     const live = config.ad_rules?.live;",
+											"//     console.log(\"ad_rules.live:\", live);",
+											"",
+											"//     pm.expect(live, \"live config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"//     pm.expect(live.preroll, `Expected live.preroll to be true, but got: ${live?.preroll}`).to.be.true;",
+											"//     pm.expect(live.midroll, `Expected live.midroll to be false, but got: ${live?.midroll}`).to.be.false;",
+											"// });",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{v1_android_player_url}}",
+									"host": [
+										"{{v1_android_player_url}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "N12",
+			"item": [
+				{
+					"name": "ios",
+					"item": [
+						{
+							"name": "mainConfig",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"// ✅ Test 1: Validate pushTag does not contain debug",
+											"pm.test(\"Test 1: pushTag does not contain 'debug'\", function () {",
+											"    const pushTag = json.params?.pushTag;",
+											"    pm.expect(pushTag, \"pushTag is missing or not a string\").to.be.a(\"string\");",
+											"    console.log(\"pushTag:\", pushTag);",
+											"    pm.expect(pushTag.toLowerCase(), `'pushTag' contains 'debug': ${pushTag}`).to.not.include(\"debug\");",
+											"});",
+											"",
+											"// ✅ Test 2: Validate defaultIU is '/242748299/news_app/'",
+											"pm.test(\"Test 2: default_iu is '/242748299/news_app/'\", function () {",
+											"    pm.expect(json.params?.default_iu, \"defaultIU is missing or not a string\").to.be.a(\"string\");",
+											"    const default_iu = json.params?.default_iu;",
+											"    const expected = \"/242748299/news_app/\";",
+											"    console.log(\"default_iu:\", default_iu);",
+											"    pm.expect(default_iu, `Expected defaultIU to be '${expected}' but got '${default_iu}'`).to.eql(expected);",
+											"});",
+											"",
+											"// ✅ Test 3: Validate consumer is 'mobileApp_n12'",
+											"pm.test(\"Test 3: consumer is 'mobileApp'\", function () {",
+											"    pm.expect(json.params?.consumer, \"consumer is missing or not a string\").to.be.a(\"string\");",
+											"    const consumer = json.params?.consumer;",
+											"    const expected = \"mobileApp_n12\";",
+											"    console.log(\"consumer:\", consumer);",
+											"    pm.expect(consumer, `Expected consumer to be '${expected}' but got '${consumer}'`).to.eql(expected);",
+											"});",
+											"",
+											"// ✅ Test 4: Validate all source URLs do not contain 'test' 'int' and 'dev'",
+											"pm.test(\"Test 4: sources URLs do not contain 'test', 'int', or 'dev'\", function () {",
+											"    const sources = json.sources || {};",
+											"    const forbidden = [\"test\", \"int\", \"renderint\"];",
+											"     let urls = [];",
+											"",
+											"    function extractStrings(obj) {",
+											"        for (let key in obj) {",
+											"            if (!obj.hasOwnProperty(key)) continue;",
+											"",
+											"            const value = obj[key];",
+											"            if (typeof value === \"string\") {",
+											"                urls.push(value);",
+											"            } else if (typeof value === \"object\" && value !== null) {",
+											"                extractStrings(value);",
+											"            }",
+											"        }",
+											"    }",
+											"",
+											"    extractStrings(sources);",
+											"",
+											"    console.log(\"All source URLs:\", urls);",
+											"    pm.expect(urls.length, \"No URLs found in sources\").to.be.above(0);",
+											"",
+											"    const offendingUrls = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().includes(part))",
+											"    );",
+											"",
+											"    const offendingUrlsDev = urls.filter(url =>",
+											"        forbidden.some(part => url.toLowerCase().replaceAll('device',' ').includes('dev'))",
+											"    );",
+											"",
+											"    const allOffendingUrls = [...offendingUrls, ...offendingUrlsDev];",
+											"    console.log(\"Offending URLs (forbidden content):\", allOffendingUrls);",
+											"",
+											"    pm.expect(allOffendingUrls.length, `Found forbidden URLs: ${allOffendingUrls.join(', ')}`).to.equal(0);",
+											"});",
+											"",
+											"// ✅ Test 5: Check player config URL exist",
+											"pm.test(\"Test 5: Player config URL exists and is a valid URL\", function () {",
+											"    const playerUrl = json.sources?.player;",
+											"    console.log(\"player config URL:\", playerUrl);",
+											"    pm.expect(playerUrl, \"Player config URL is missing or not defined\").to.exist;",
+											"    pm.expect(playerUrl, `Player config URL is invalid: ${playerUrl}`).to.match(/^https:\\/\\/.+\\.json$/);",
+											"});",
+											"",
+											"let playerUrl = json.sources.player;",
+											"pm.collectionVariables.set(\"n12_ios_player_url\", playerUrl);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://apps.mako.co.il/mobile/config/iphone/news12/27.0/mainConfig.json",
+									"protocol": "https",
+									"host": [
+										"apps",
+										"mako",
+										"co",
+										"il"
+									],
+									"path": [
+										"mobile",
+										"config",
+										"iphone",
+										"news12",
+										"27.0",
+										"mainConfig.json"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "playerConfig - RUN mainConfig to update url",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const config = pm.response.json();",
+											"",
+											"// ✅ Test 1: dfp_ad_tag contains 'slotname=%IU%'",
+											"pm.test(\"Test 1: dfp_ad_tag contains 'slotname=%IU%'\", function () {",
+											"    const adTag = config.params?.advertising?.dfp_ad_tag || \"\";",
+											"    console.log(\"dfp_ad_tag:\", adTag);",
+											"    pm.expect(adTag, `Expected dfp_ad_tag to be a string, got: ${typeof adTag}`).to.be.a(\"string\");",
+											"    pm.expect(adTag.includes(\"slotname=%IU%\"), `dfp_ad_tag does not include 'slotname=%IU%': ${adTag}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 2: terminalLog value is false",
+											"pm.test(\"Test 2: terminalLog value is false\", function () {",
+											"    const terminalLog = config.params?.terminalLog;",
+											"    console.log(\"terminalLog:\", terminalLog);",
+											"    pm.expect(typeof terminalLog, `Expected terminalLog to be boolean, got: ${typeof terminalLog}`).to.equal(\"boolean\");",
+											"    pm.expect(terminalLog, `Expected terminalLog to be false, but got: ${terminalLog}`).to.eql(false);",
+											"});",
+											"",
+											"// ✅ Test 3: All stopWatchingTime values are greater than 1000",
+											"pm.test(\"Test 3: stopWatchingTime values are all greater than 1000\", function () {",
+											"    const stopTimes = config.params?.stopWatchingTime || {};",
+											"    console.log(\"stopWatchingTime values:\", stopTimes);",
+											"",
+											"    pm.expect(stopTimes, \"stopWatchingTime is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"",
+											"    const failingKeys = Object.entries(stopTimes)",
+											"        .filter(([key, val]) => val <= 1000)",
+											"        .map(([key, val]) => `${key}: ${val}`);",
+											"",
+											"    pm.expect(failingKeys.length === 0, `Some stopWatchingTime values are not above 1000: ${failingKeys.join(\", \")}`).to.be.true;",
+											"});",
+											"// ✅ Test 4:  Check vod ad_rules values. preroll and midroll are true",
+											"pm.test(\"Test 4: Check ad_rules.vod values. preroll and midroll are true\", function () {",
+											"    const vod = config.ad_rules?.vod;",
+											"    console.log(\"ad_rules.vod:\", vod);",
+											"",
+											"    pm.expect(vod, \"vod config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(vod.preroll, `Expected vod.preroll to be true, but got: ${vod?.preroll}`).to.be.true;",
+											"    pm.expect(vod.midroll, `Expected vod.midroll to be true, but got: ${vod?.midroll}`).to.be.true;",
+											"});",
+											"",
+											"// ✅ Test 5: check ad_rule.live values. preroll true, midroll false",
+											"pm.test(\"Test 5: check ad_rule.live values. preroll true, midroll false\", function () {",
+											"    const live = config.ad_rules?.live;",
+											"    console.log(\"ad_rules.live:\", live);",
+											"",
+											"    pm.expect(live, \"live config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(live.preroll, `Expected live.preroll to be true, but got: ${live?.preroll}`).to.be.true;",
+											"    pm.expect(live.midroll, `Expected live.midroll to be false, but got: ${live?.midroll}`).to.be.false;",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// const version = pm.variables.get(\"mako_ios_version\");",
+											"// const configUrl = `https://apps.mako.co.il/mobile/config/mako/ios/${version}/mainConfig.json`;",
+											"",
+											"// pm.sendRequest({",
+											"//     url: configUrl,",
+											"//     method: 'GET'",
+											"// }, function (err, res) {",
+											"//     if (err) {",
+											"//         console.error(\"Failed to fetch config:\", err);",
+											"//         throw new Error(\"Config request failed\");",
+											"//     }",
+											"",
+											"//     const json = res.json();",
+											"//     const playerUrl = json.sources?.player;",
+											"",
+											"//     console.log(\"player config URL:\", playerUrl);",
+											"//     pm.expect(playerUrl, \"Player config URL is missing or not defined\").to.exist;",
+											"",
+											"//     pm.environment.set(\"player_url\", playerUrl);",
+											"// });",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{n12_ios_player_url}}",
+									"host": [
+										"{{n12_ios_player_url}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "android",
+			"item": [
+				{
+					"name": "mainConfig",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const json = pm.response.json();",
+									"",
+									"// ✅ Test 1: Validate pushTag does not contain debug",
+									"pm.test(\"Test 1: pushTag does not contain 'debug'\", function () {",
+									"    const pushTag = json.params?.pushTag;",
+									"    pm.expect(pushTag, \"pushTag is missing or not a string\").to.be.a(\"string\");",
+									"    console.log(\"pushTag:\", pushTag);",
+									"    pm.expect(pushTag.toLowerCase(), `'pushTag' contains 'debug': ${pushTag}`).to.not.include(\"debug\");",
+									"});",
+									"",
+									"// ✅ Test 2: Validate homePageIu is '/242748299/news_app/'",
+									"pm.test(\"Test 2: homePageIu is '/242748299/news_app/'\", function () {",
+									"    pm.expect(json.params?.homePageIu, \"defaultIU is missing or not a string\").to.be.a(\"string\");",
+									"    const homePageIu = json.params?.homePageIu;",
+									"    const expected = \"/242748299/news_app/\";",
+									"    console.log(\"homePageIu:\", homePageIu);",
+									"    pm.expect(homePageIu, `Expected defaultIU to be '${expected}' but got '${homePageIu}'`).to.eql(expected);",
+									"});",
+									"",
+									"// ✅ Test 3: Validate playerConsumer is 'mobileApp_n12'",
+									"pm.test(\"Test 3: playerConsumer is 'mobileApp_n12'\", function () {",
+									"    pm.expect(json.params?.player_consumer, \"playerConsumer is missing or not a string\").to.be.a(\"string\");",
+									"    const playerConsumer = json.params?.player_consumer;",
+									"    const expected = \"mobileApp_n12\";",
+									"    console.log(\"playerConsumer:\", playerConsumer);",
+									"    pm.expect(playerConsumer, `Expected playerConsumer to be '${expected}' but got '${playerConsumer}'`).to.eql(expected);",
+									"});",
+									"",
+									"// ✅ Test 4: Validate all source URLs do not contain 'test' 'int' and 'dev'",
+									"pm.test(\"Test 4: sources URLs do not contain 'test', 'int', or 'dev'\", function () {",
+									"    const sources = json.sources || {};",
+									"    const forbidden = [\"test\", \"int\", \"renderint\"];",
+									"     let urls = [];",
+									"",
+									"    function extractStrings(obj) {",
+									"        for (let key in obj) {",
+									"            if (!obj.hasOwnProperty(key)) continue;",
+									"",
+									"            const value = obj[key];",
+									"            if (typeof value === \"string\") {",
+									"                urls.push(value);",
+									"            } else if (typeof value === \"object\" && value !== null) {",
+									"                extractStrings(value);",
+									"            }",
+									"        }",
+									"    }",
+									"",
+									"    extractStrings(sources);",
+									"",
+									"    console.log(\"All source URLs:\", urls);",
+									"    pm.expect(urls.length, \"No URLs found in sources\").to.be.above(0);",
+									"",
+									"    const offendingUrls = urls.filter(url =>",
+									"        forbidden.some(part => url.toLowerCase().includes(part))",
+									"    );",
+									"",
+									"    const offendingUrlsDev = urls.filter(url =>",
+									"        forbidden.some(part => url.toLowerCase().replaceAll('device',' ').includes('dev'))",
+									"    );",
+									"",
+									"    const allOffendingUrls = [...offendingUrls, ...offendingUrlsDev];",
+									"    console.log(\"Offending URLs (forbidden content):\", allOffendingUrls);",
+									"",
+									"    pm.expect(allOffendingUrls.length, `Found forbidden URLs: ${allOffendingUrls.join(', ')}`).to.equal(0);",
+									"});",
+									"",
+									"// ✅ Test 5: Check player config URL exist",
+									"pm.test(\"Test 5: Player config URL exists and is a valid URL\", function () {",
+									"    const playerUrl = json.sources?.ksCoreConfig;",
+									"    console.log(\"player config URL:\", playerUrl);",
+									"    pm.expect(playerUrl, \"Player config URL is missing or not defined\").to.exist;",
+									"    pm.expect(playerUrl, `Player config URL is invalid: ${playerUrl}`).to.match(/^https:\\/\\/.+\\.json$/);",
+									"});",
+									"",
+									"let playerUrl = json.sources.ksCoreConfig;",
+									"pm.collectionVariables.set(\"n12_android_player_url\", playerUrl);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://apps.mako.co.il/mobile/config/android/news12/24.0/mainConfig.json",
+							"protocol": "https",
+							"host": [
+								"apps",
+								"mako",
+								"co",
+								"il"
+							],
+							"path": [
+								"mobile",
+								"config",
+								"android",
+								"news12",
+								"24.0",
+								"mainConfig.json"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "playerConfig - RUN mainConfig to update url",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const config = pm.response.json();",
+									"",
+									"// ✅ Test 1: dfp_ad_tag contains 'slotname=%IU%'",
+									"pm.test(\"Test 1: dfp_ad_tag contains 'slotname=%IU%'\", function () {",
+									"    const adTag = config.params?.advertising?.dfp_ad_tag || \"\";",
+									"    console.log(\"dfp_ad_tag:\", adTag);",
+									"    pm.expect(adTag, `Expected dfp_ad_tag to be a string, got: ${typeof adTag}`).to.be.a(\"string\");",
+									"    pm.expect(adTag.includes(\"slotname=%IU%\"), `dfp_ad_tag does not include 'slotname=%IU%': ${adTag}`).to.be.true;",
+									"});",
+									"",
+									"// ✅ Test 2: pauseAdUrl contains 'slotname=%IU%'",
+									"pm.test(\"Test 2: pauseAdUrl contains 'slotname=%IU%'\", function () {",
+									"    const adTag = config.params?.advertising?.pauseAdUrl || \"\";",
+									"    console.log(\"pauseAdUrl:\", adTag);",
+									"    pm.expect(adTag, `Expected pauseAdUrl to be a string, got: ${typeof adTag}`).to.be.a(\"string\");",
+									"    pm.expect(adTag.includes(\"iu=%IU%\"), `pauseAdUrl does not include 'iu=%IU%': ${adTag}`).to.be.true;",
+									"});",
+									"",
+									"// ✅ Test 3: terminalLog value is false",
+									"pm.test(\"Test 3: terminalLog value is false\", function () {",
+									"    const terminalLog = config.params?.terminalLog;",
+									"    console.log(\"terminalLog:\", terminalLog);",
+									"    pm.expect(typeof terminalLog, `Expected terminalLog to be boolean, got: ${typeof terminalLog}`).to.equal(\"boolean\");",
+									"    pm.expect(terminalLog, `Expected terminalLog to be false, but got: ${terminalLog}`).to.eql(false);",
+									"});",
+									"",
+									"// ✅ Test 4: All stopWatchingTime values are greater than 1000",
+									"pm.test(\"Test 4: stopWatchingTime values are all greater than 1000\", function () {",
+									"    const stopTimes = config.params?.stopWatchingTime || {};",
+									"    console.log(\"stopWatchingTime values:\", stopTimes);",
+									"",
+									"    pm.expect(stopTimes, \"stopWatchingTime is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+									"",
+									"    const failingKeys = Object.entries(stopTimes)",
+									"        .filter(([key, val]) => val <= 1000)",
+									"        .map(([key, val]) => `${key}: ${val}`);",
+									"",
+									"    pm.expect(failingKeys.length === 0, `Some stopWatchingTime values are not above 1000: ${failingKeys.join(\", \")}`).to.be.true;",
+									"});",
+									"// ✅ Test 5:  Check vod ad_rules values. preroll and midroll are true",
+									"pm.test(\"Test 5: Check ad_rules.vod values. preroll and midroll are true\", function () {",
+									"    const vod = config.ad_rules?.vod;",
+									"    console.log(\"ad_rules.vod:\", vod);",
+									"",
+									"    pm.expect(vod, \"vod config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+									"    pm.expect(vod.preroll, `Expected vod.preroll to be true, but got: ${vod?.preroll}`).to.be.true;",
+									"    pm.expect(vod.midroll, `Expected vod.midroll to be true, but got: ${vod?.midroll}`).to.be.true;",
+									"});",
+									"",
+									"// ✅ Test 6: check ad_rule.live values. preroll true, midroll false",
+									"pm.test(\"Test 6: check ad_rule.live values. preroll true, midroll false\", function () {",
+									"    const live = config.ad_rules?.live;",
+									"    console.log(\"ad_rules.live:\", live);",
+									"",
+									"    pm.expect(live, \"live config is missing or not an object\").to.be.an(\"object\").that.is.not.empty;",
+									"    pm.expect(live.preroll, `Expected live.preroll to be true, but got: ${live?.preroll}`).to.be.true;",
+									"    pm.expect(live.midroll, `Expected live.midroll to be false, but got: ${live?.midroll}`).to.be.false;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{n12_android_player_url}}",
+							"host": [
+								"{{n12_android_player_url}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "mako_ios_player_url",
+			"value": ""
+		},
+		{
+			"key": "12plus_ios_player_url",
+			"value": ""
+		},
+		{
+			"key": "12plus_ios_tv_player_url",
+			"value": ""
+		},
+		{
+			"key": "12plus_android_player_url",
+			"value": ""
+		},
+		{
+			"key": "12plus_android_tv_player_url",
+			"value": ""
+		},
+		{
+			"key": "v1_ios_player_url",
+			"value": ""
+		},
+		{
+			"key": "v1_android_player_url",
+			"value": ""
+		},
+		{
+			"key": "n12_ios_player_url",
+			"value": ""
+		},
+		{
+			"key": "n12_android_player_url",
+			"value": ""
+		}
+	]
+}
